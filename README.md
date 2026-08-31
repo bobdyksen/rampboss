@@ -20,35 +20,22 @@ npm run build
 
 ## Deploy on Vercel
 
-This is a static Vite app. Vercel detects that automatically. The repo itself currently lives on Origin (`origin.cursor.com`), which Vercel cannot watch, so pick one of these:
+Repo: [github.com/bobdyksen/rampboss](https://github.com/bobdyksen/rampboss)
 
-### A. GitHub import (keeps deploys hooked up)
+This is a static Vite app. `vercel.json` pins the build to `npm run build` and `dist`.
 
-1. Create an empty GitHub repo (for example `degas/rampboss`).
-2. Add it as a second remote and push `main` plus this branch:
+1. Open [vercel.com/new](https://vercel.com/new)
+2. Import `bobdyksen/rampboss`
+3. Leave the Vite preset. Deploy.
 
-```bash
-git remote add github https://github.com/YOUR_ORG/rampboss.git
-git push -u github main
-git push github cursor/ramp-boss-mvp-409c
-```
+Production follows `main`. Other branches get Preview URLs.
 
-3. Open [vercel.com/new](https://vercel.com/new), import that GitHub repo, and Deploy. Leave the preset as Vite. Build is `npm run build`, output is `dist`.
-4. Production follows `main`. Every other branch, including this PR, gets a Preview URL.
-
-### B. CLI deploy (no GitHub required)
-
-From a machine where you can log into Vercel:
+Or from a logged-in machine:
 
 ```bash
-npx vercel login
 npx vercel        # preview
 npx vercel --prod # production
 ```
-
-Do not override the prompted settings. `vercel.json` already pins Vite, the build command, and the `dist` folder.
-
-I cannot finish the login from this cloud agent. If you add a GitHub remote or a `VERCEL_TOKEN`, the next deploy can be done from here.
 
 ## MVP loop
 
