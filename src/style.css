@@ -232,6 +232,27 @@ canvas.game-canvas {
 .radial button.busy { border-color: var(--accent); }
 .radial button.done { border-color: var(--green); }
 
+.floats {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.score-float {
+  position: absolute;
+  transform: translate(-50%, 0);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+  white-space: nowrap;
+}
+
+.score-float.bonus,
+.score-float.base { color: var(--green); }
+.score-float.streak { color: var(--accent); }
+.score-float.late { color: var(--red); }
+
 .toast {
   position: absolute;
   left: 50%;

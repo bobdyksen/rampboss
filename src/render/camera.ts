@@ -2,8 +2,8 @@ import * as THREE from "three";
 
 export class IsoCamera {
   readonly camera: THREE.PerspectiveCamera;
-  target = new THREE.Vector3(0, 0, 12);
-  distance = 58;
+  target = new THREE.Vector3(0, 0, 14);
+  distance = 72;
   azimuth = 0.55;
   polar = 0.92;
   private focus = new THREE.Vector3(0, 0, 12);

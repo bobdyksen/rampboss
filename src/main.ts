@@ -203,12 +203,28 @@ function bindSimulation(next: Simulation): void {
   next.events.on((event) => {
     if (event.type === "task_completed") sfx.complete();
     if (event.type === "flight_departed") sfx.depart();
-    if (event.type === "score" && event.label === "PERFECT TURN") {
-      overlay.showToast("PERFECT TURN!");
-      sfx.perfect();
+    if (event.type === "flight_spawned") {
+      const inbound = next.flights.find((item) => item.id === event.flightId);
+      if (inbound && !next.selectedFlightId) cameraRig.focusOn(inbound.position.x, inbound.position.z);
     }
-    if (event.type === "score" && event.label.startsWith("ON-TIME STREAK")) {
-      overlay.showToast(event.label);
+    if (event.type === "score") {
+      const pos = world.aircraftPosition(event.flightId);
+      if (pos) {
+        const screen = project(pos.x, 5, pos.z);
+        if (screen) {
+          overlay.addFloat(
+            `${event.label} ${event.amount > 0 ? "+" : ""}${event.amount}`,
+            screen.x,
+            screen.y,
+            event.kind,
+          );
+        }
+      }
+      if (event.label === "PERFECT TURN") {
+        overlay.showToast("PERFECT TURN!");
+        sfx.perfect();
+      }
+      if (event.label.startsWith("ON-TIME STREAK")) overlay.showToast(event.label);
     }
     if (event.type === "flight_ready") overlay.showToast("READY FOR PUSH");
     if (event.type === "warning") overlay.showToast(event.message);

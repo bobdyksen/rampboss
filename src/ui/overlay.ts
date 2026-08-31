@@ -29,6 +29,7 @@ export class Overlay {
   onSelectFlight?: (flightId: string) => void;
   onSpeed?: (speed: 0 | 1 | 2) => void;
   private radialKey = "";
+  private floats: Array<{ id: number; text: string; x: number; y: number; born: number; kind: string }> = [];
 
   constructor(parent: HTMLElement) {
     this.root = parent;
@@ -45,6 +46,7 @@ export class Overlay {
       <div class="radial hidden" id="radial"></div>
       <div class="radio" id="radio"></div>
       <div class="toast" id="toast"></div>
+      <div class="floats" id="floats"></div>
       <div class="controls">
         <button data-speed="0">II</button>
         <button data-speed="1" class="active">1x</button>
@@ -96,6 +98,10 @@ export class Overlay {
     this.title.classList.add("hidden");
   }
 
+  addFloat(text: string, x: number, y: number, kind: string): void {
+    this.floats.push({ id: Date.now() + Math.random(), text, x, y, born: performance.now(), kind });
+  }
+
   showToast(text: string): void {
     this.toast.textContent = text;
     this.toast.classList.remove("show");
@@ -125,6 +131,7 @@ export class Overlay {
 
     this.renderLabels(sim, project);
     this.renderRadial(sim, project);
+    this.renderFloats();
     this.hud.style.display = this.title.classList.contains("hidden") ? "" : "none";
     this.controls.style.visibility = this.title.classList.contains("hidden") ? "visible" : "hidden";
   }
@@ -226,6 +233,20 @@ export class Overlay {
         this.onAssign?.(flight.id, serviceId);
       });
     });
+  }
+
+  private renderFloats(): void {
+    const now = performance.now();
+    this.floats = this.floats.filter((item) => now - item.born < 2200);
+    const layer = this.root.querySelector("#floats");
+    if (!layer) return;
+    layer.innerHTML = this.floats
+      .map((item) => {
+        const t = (now - item.born) / 2200;
+        const y = item.y - t * 70;
+        return `<div class="score-float ${item.kind}" style="left:${item.x}px;top:${y}px;opacity:${1 - t}">${item.text}</div>`;
+      })
+      .join("");
   }
 
   private setText(id: string, value: string): void {
