@@ -193,6 +193,7 @@ export class GameWorld {
       group.position.set(flight.position.x, 1.15, flight.position.z);
       group.rotation.y = flight.heading;
       group.visible = flight.phase !== "departed";
+      group.scale.setScalar(flight.id === sim.selectedFlightId ? 1.04 : 1);
       const beacon = group.getObjectByName("beacon") as THREE.Mesh | undefined;
       if (beacon && beacon.material instanceof THREE.MeshStandardMaterial) {
         beacon.material.emissiveIntensity = flight.beaconOn ? (Math.sin(this.clock * 10) > 0 ? 2 : 0.15) : 0.05;
@@ -226,12 +227,12 @@ export class GameWorld {
       if (!group) continue;
       const tunnel = group.getObjectByName("tunnel");
       const cabin = group.getObjectByName("cabin");
-      const extend = 4 + gate.jetBridge * 8;
+      const extend = 6 + gate.jetBridge * 11;
       if (tunnel) {
-        tunnel.scale.z = 0.45 + gate.jetBridge * 0.85;
-        tunnel.position.z = extend * 0.42;
+        tunnel.scale.z = 0.55 + gate.jetBridge * 1.15;
+        tunnel.position.z = extend * 0.48;
       }
-      if (cabin) cabin.position.z = 3.2 + gate.jetBridge * 9.2;
+      if (cabin) cabin.position.z = 4.2 + gate.jetBridge * 12.5;
     }
   }
 

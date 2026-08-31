@@ -70,6 +70,13 @@ export function createAircraftMesh(type: AircraftType, livery: string): THREE.Gr
   navR.position.set(type.wingspan * 0.48, 0, type.length * 0.04);
   group.add(navR);
 
+  const hit = new THREE.Mesh(
+    new THREE.SphereGeometry(type.length * 0.42, 10, 8),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
+  );
+  hit.name = "hit";
+  group.add(hit);
+
   return group;
 }
 

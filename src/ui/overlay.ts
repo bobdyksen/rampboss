@@ -26,6 +26,7 @@ export class Overlay {
   onStart?: () => void;
   onRestart?: () => void;
   onAssign?: (flightId: string, serviceId: ServiceId) => void;
+  onSelectFlight?: (flightId: string) => void;
   onSpeed?: (speed: 0 | 1 | 2) => void;
   private radialKey = "";
 
@@ -78,6 +79,11 @@ export class Overlay {
     this.controls = parent.querySelector(".controls")!;
 
     parent.querySelector("#start-btn")?.addEventListener("click", () => this.onStart?.());
+    this.labels.addEventListener("click", (event) => {
+      const label = (event.target as HTMLElement).closest<HTMLElement>(".ac-label");
+      const flightId = label?.dataset.flightId;
+      if (flightId) this.onSelectFlight?.(flightId);
+    });
     this.controls.querySelectorAll("button").forEach((button) => {
       button.addEventListener("click", () => {
         const speed = Number(button.getAttribute("data-speed")) as 0 | 1 | 2;
@@ -164,7 +170,7 @@ export class Overlay {
         return `<span class="task-dot ${task?.state ?? "locked"}" title="${id}"></span>`;
       }).join("");
       bits.push(`
-        <div class="ac-label ${color}" style="left:${screen.x}px;top:${screen.y}px">
+        <div class="ac-label ${color}${flight.id === sim.selectedFlightId ? " selected" : ""}" data-flight-id="${flight.id}" style="left:${screen.x}px;top:${screen.y}px">
           <div class="num">${flight.flightNumber}</div>
           <div class="meta">${type.name} · DEP ${formatSimClock(flight.departureSim)}</div>
           <div class="meta">${remain < 0 ? "LATE" : "OUT"} ${formatCountdown(remain)}</div>

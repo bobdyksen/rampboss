@@ -40,6 +40,10 @@ canvas.game-canvas {
   position: relative;
 }
 
+.overlay-host {
+  pointer-events: none;
+}
+
 .hud,
 .radio,
 .menu-layer,
@@ -145,6 +149,8 @@ canvas.game-canvas {
 }
 
 .ac-label {
+  pointer-events: auto;
+  cursor: pointer;
   position: absolute;
   transform: translate(-50%, -120%);
   background: rgba(7, 12, 22, 0.84);
@@ -189,6 +195,9 @@ canvas.game-canvas {
 .ac-label.yellow { border-color: rgba(244, 211, 94, 0.7); }
 .ac-label.orange { border-color: rgba(240, 138, 75, 0.8); }
 .ac-label.red { border-color: rgba(255, 93, 108, 0.85); }
+.ac-label.selected {
+  box-shadow: 0 0 0 2px #7bd7ff;
+}
 
 .radial {
   position: absolute;

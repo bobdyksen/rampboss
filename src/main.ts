@@ -22,8 +22,10 @@ renderer.domElement.className = "game-canvas";
 root.appendChild(renderer.domElement);
 
 const overlayHost = document.createElement("div");
+overlayHost.className = "overlay-host";
 overlayHost.style.position = "absolute";
 overlayHost.style.inset = "0";
+overlayHost.style.pointerEvents = "none";
 root.appendChild(overlayHost);
 
 const cameraRig = new IsoCamera(window.innerWidth / window.innerHeight);
@@ -48,6 +50,7 @@ overlay.onStart = () => {
   sim.setSpeed(1);
   overlay.setSpeed(1);
   sfx.dispatch();
+  overlay.showToast("TAP AN AIRCRAFT");
 };
 
 overlay.onRestart = () => {
@@ -60,6 +63,11 @@ overlay.onRestart = () => {
 };
 
 overlay.onAssign = (flightId, serviceId) => assign(flightId, serviceId);
+overlay.onSelectFlight = (flightId) => {
+  sim.selectFlight(flightId);
+  const flight = sim.flights.find((item) => item.id === flightId);
+  if (flight) cameraRig.focusOn(flight.position.x, flight.position.z);
+};
 
 overlay.onSpeed = (speed) => {
   if (!playing) return;
@@ -88,7 +96,9 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+renderer.domElement.style.cursor = "grab";
 renderer.domElement.addEventListener("pointerdown", (event) => {
+  renderer.domElement.style.cursor = "grabbing";
   pointerDown = { x: event.clientX, y: event.clientY, t: performance.now() };
 });
 
@@ -107,7 +117,8 @@ renderer.domElement.addEventListener("pointerup", (event) => {
   const dt = performance.now() - pointerDown.t;
   const dist = Math.hypot(event.clientX - pointerDown.x, event.clientY - pointerDown.y);
   pointerDown = null;
-  if (dist > 8 || dt > 400 || !playing) return;
+  renderer.domElement.style.cursor = "grab";
+  if (dist > 14 || dt > 700 || !playing) return;
   pickAt(event.clientX, event.clientY);
 });
 
