@@ -169,3 +169,44 @@ export function bagSprite(color: string): HTMLCanvasElement {
 }
 
 export const BAG_COLORS = ["#8e44ad", "#2980b9", "#16a085", "#c0392b", "#f1c40f"];
+
+export const SPRITE_URLS: Record<string, string> = {
+  rj70: "/sprites/ac_rj70.png",
+  nb320: "/sprites/ac_nb320.png",
+  rj70_ridge: "/sprites/ac_rj70_ridge.png",
+  rj70_swift: "/sprites/ac_rj70_swift.png",
+  nb320_horizon: "/sprites/ac_nb320_horizon.png",
+  fuel_truck: "/sprites/veh_fuel_truck.png",
+  belt_loader: "/sprites/veh_belt_loader.png",
+  baggage_tractor: "/sprites/veh_baggage_tractor.png",
+  cleaning_van: "/sprites/veh_cleaning_van.png",
+  pushback_tug: "/sprites/veh_pushback_tug.png",
+};
+
+export async function loadPng(url: string): Promise<HTMLCanvasElement | null> {
+  if (typeof Image === "undefined") return null;
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(image, 0, 0);
+    return canvas;
+  } catch {
+    return null;
+  }
+}
+
+export async function loadSpriteFiles(): Promise<Map<string, HTMLCanvasElement>> {
+  const loaded = new Map<string, HTMLCanvasElement>();
+  await Promise.all(
+    Object.entries(SPRITE_URLS).map(async ([key, url]) => {
+      const canvas = await loadPng(url);
+      if (canvas) loaded.set(key, canvas);
+    }),
+  );
+  return loaded;
+}

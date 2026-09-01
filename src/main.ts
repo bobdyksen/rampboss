@@ -26,6 +26,7 @@ root.appendChild(overlayHost);
 
 const camera = new MapCamera();
 const world = new PixelWorld();
+void world.loadAssets();
 const overlay = new Overlay(overlayHost);
 const sfx = new Sfx();
 

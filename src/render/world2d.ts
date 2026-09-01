@@ -2,7 +2,7 @@ import { AIRCRAFT, AIRLINES, VEHICLES } from "../data/catalog";
 import { GATES } from "../data/waypoints";
 import type { Simulation } from "../sim/simulation";
 import type { MapCamera } from "./camera2d";
-import { BAG_COLORS, aircraftSprite, bagSprite, vehicleSprite } from "./sprites";
+import { BAG_COLORS, aircraftSprite, bagSprite, loadSpriteFiles, vehicleSprite } from "./sprites";
 
 const GRASS = "#3d7a3a";
 const GRASS_DARK = "#2f6230";
@@ -40,10 +40,15 @@ export class PixelWorld {
   private vehicles = new Map<string, HTMLCanvasElement>();
   private bags: Array<{ flightId: string; t: number; side: number; color: string }> = [];
   private bagArt = new Map<string, HTMLCanvasElement>();
+  private files = new Map<string, HTMLCanvasElement>();
   private clock = 0;
 
   constructor() {
     for (const color of BAG_COLORS) this.bagArt.set(color, bagSprite(color));
+  }
+
+  async loadAssets(): Promise<void> {
+    this.files = await loadSpriteFiles();
   }
 
   aircraftPosition(id: string): { x: number; y: number; z: number } | null {
@@ -180,8 +185,9 @@ export class PixelWorld {
       if (flight.phase === "scheduled" || flight.phase === "departed") continue;
       const type = AIRCRAFT[flight.aircraftTypeId];
       const airline = AIRLINES[flight.airlineId];
+      const painted = this.files.get(`${type.id}_${airline.id}`) ?? this.files.get(type.id);
       const key = `${type.id}:${airline.color}`;
-      let sprite = this.aircraft.get(key);
+      let sprite = painted ?? this.aircraft.get(key);
       if (!sprite) {
         sprite = aircraftSprite(type.className, airline.color, type.colorSecondary);
         this.aircraft.set(key, sprite);
@@ -211,7 +217,7 @@ export class PixelWorld {
 
   private drawVehicles(ctx: CanvasRenderingContext2D, camera: MapCamera, sim: Simulation): void {
     for (const vehicle of sim.vehicles) {
-      let sprite = this.vehicles.get(vehicle.type);
+      let sprite = this.files.get(vehicle.type) ?? this.vehicles.get(vehicle.type);
       if (!sprite) {
         sprite = vehicleSprite(vehicle.type, VEHICLES[vehicle.type].color);
         this.vehicles.set(vehicle.type, sprite);
