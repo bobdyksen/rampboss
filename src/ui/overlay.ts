@@ -1,10 +1,12 @@
 import { AIRCRAFT, SERVICES } from "../data/catalog";
 import { formatCountdown, formatSimClock } from "../data/scenario";
+import { GATES } from "../data/waypoints";
 import type { Simulation } from "../sim/simulation";
 import type { ServiceId, ShiftResult } from "../sim/types";
 
 const PLAYER_TASKS: ServiceId[] = [
   "jet_bridge",
+  "deplane",
   "baggage_unload",
   "fuel",
   "cleaning",
@@ -59,7 +61,7 @@ export class Overlay {
           <p>Ridgefield Municipal — Morning Bank. Top-down pixel ramp. Drag the map, tap a jet, keep the airport moving.</p>
           <div class="howto">
             <div><strong>Tap an aircraft</strong>to open services</div>
-            <div><strong>Dispatch crews</strong>fuel, bags, clean, push</div>
+            <div><strong>Dispatch crews</strong>deplane, fuel, bags, board, push</div>
             <div><strong>Travel time matters</strong>equipment cannot be two places at once</div>
             <div><strong>Beat the clock</strong>on-time departures stack a streak</div>
           </div>
@@ -160,6 +162,11 @@ export class Overlay {
     this.results.innerHTML = "";
   }
 
+  private terminalAnchor(flightGateId: string): { x: number; z: number } {
+    const gate = GATES.find((g) => g.id === flightGateId);
+    return { x: gate?.stand.x ?? 0, z: -19 };
+  }
+
   private renderLabels(
     sim: Simulation,
     project: (x: number, y: number, z: number) => { x: number; y: number } | null,
@@ -167,7 +174,8 @@ export class Overlay {
     const bits: string[] = [];
     for (const flight of sim.flights) {
       if (flight.phase === "scheduled" || flight.phase === "departed") continue;
-      const screen = project(flight.position.x, 3.2, flight.position.z);
+      const anchor = this.terminalAnchor(flight.gateId);
+      const screen = project(anchor.x, 0, anchor.z);
       if (!screen) continue;
       const color = sim.scheduleColor(flight);
       const remain = flight.departureSim - sim.clock.time;
@@ -177,7 +185,7 @@ export class Overlay {
         return `<span class="task-dot ${task?.state ?? "locked"}" title="${id}"></span>`;
       }).join("");
       bits.push(`
-        <div class="ac-label ${color}${flight.id === sim.selectedFlightId ? " selected" : ""}" data-flight-id="${flight.id}" style="left:${screen.x}px;top:${screen.y}px">
+        <div class="ac-label terminal ${color}${flight.id === sim.selectedFlightId ? " selected" : ""}" data-flight-id="${flight.id}" style="left:${screen.x}px;top:${screen.y}px">
           <div class="num">${flight.flightNumber}</div>
           <div class="meta">${type.name} · DEP ${formatSimClock(flight.departureSim)}</div>
           <div class="meta">${remain < 0 ? "LATE" : "OUT"} ${formatCountdown(remain)}</div>
@@ -199,13 +207,22 @@ export class Overlay {
       this.radialKey = "";
       return;
     }
-    const screen = project(flight.position.x, 2, flight.position.z);
+    const anchor = this.terminalAnchor(flight.gateId);
+    const screen = project(anchor.x, 0, anchor.z + 1.5);
     if (!screen) return;
     this.radial.classList.remove("hidden");
     this.radial.style.left = `${screen.x}px`;
-    this.radial.style.top = `${screen.y}px`;
+    this.radial.style.top = `${screen.y + 110}px`;
 
-    const assignable: ServiceId[] = ["baggage_unload", "fuel", "cleaning", "baggage_load", "pushback"];
+    const assignable: ServiceId[] = [
+      "deplane",
+      "baggage_unload",
+      "fuel",
+      "cleaning",
+      "baggage_load",
+      "boarding",
+      "pushback",
+    ];
     const key = `${flight.id}:${assignable
       .map((id) => {
         const task = flight.tasks.find((t) => t.id === id);

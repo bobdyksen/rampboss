@@ -75,6 +75,17 @@ describe("simulation turnaround", () => {
     expect(second.reason).toMatch(/Fuel Truck/i);
   });
 
+
+  it("requires the player to start deplane and boarding", () => {
+    const sim = new Simulation(compactScenario());
+    tickFor(sim, 160);
+    // jet bridge is automatic; deplane waits for the player
+    tickFor(sim, 120);
+    expect(taskState(sim, "f1", "deplane")).toBe("available");
+    expect(sim.assignService("f1", "deplane").ok).toBe(true);
+    expect(taskState(sim, "f1", "deplane")).toBe("assigned");
+  });
+
   it("completes a full turnaround when resources are assigned", () => {
     const sim = new Simulation(compactScenario());
     run(sim, 4000);

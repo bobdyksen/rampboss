@@ -174,7 +174,13 @@ export class Simulation {
     for (const vehicle of chosen) {
       this.dispatchVehicle(vehicle, flight, serviceId);
     }
-    this.radioTalk(`${flight.flightNumber}, ${def.label.toLowerCase()} rolling.`);
+    const message =
+      serviceId === "deplane"
+        ? `${flight.flightNumber}, deplaning.`
+        : serviceId === "boarding"
+          ? `${flight.flightNumber}, boarding.`
+          : `${flight.flightNumber}, ${def.label.toLowerCase()} rolling.`;
+    this.radioTalk(message);
     return { ok: true };
   }
 
