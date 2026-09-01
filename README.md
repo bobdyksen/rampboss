@@ -2,7 +2,9 @@
 
 Arcade airport ground-operations game. You are the Ramp Boss. Keep the airport moving.
 
-This repository contains the first playable MVP: a landscape web prototype with a data-driven simulation core and a stylized 3D ramp. The product vision is iOS and Android; the web build is the fastest way to prove the turnaround loop.
+This repository contains the first playable MVP: a landscape web prototype with a data-driven simulation core and a top-down pixel ramp. The product vision is iOS and Android; the web build is the fastest way to prove the turnaround loop.
+
+Drag the map so it follows your finger. Pinch or scroll to zoom. The airport itself is the interface.
 
 ## Play
 
@@ -58,7 +60,7 @@ Simulation state is independent of Three.js.
 
 - `src/sim` — clock, flights, task graph, vehicles, scoring
 - `src/data` — aircraft, airlines, services, waypoints, scenario
-- `src/render` — isometric ramp, primitive aircraft and vehicles
+- `src/render` — top-down pixel ramp, aircraft, and vehicles
 - `src/ui` — HUD, radial dispatch menu, results
 - `tests` — clock, pathfinding, scoring, turnaround rules
 

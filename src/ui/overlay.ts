@@ -56,7 +56,7 @@ export class Overlay {
         <div class="title-card">
           <p>WORKING TITLE</p>
           <h1>RAMP BOSS</h1>
-          <p>Ridgefield Municipal — Morning Bank. Two gates. One fuel truck. Keep the airport moving.</p>
+          <p>Ridgefield Municipal — Morning Bank. Top-down pixel ramp. Drag the map, tap a jet, keep the airport moving.</p>
           <div class="howto">
             <div><strong>Tap an aircraft</strong>to open services</div>
             <div><strong>Dispatch crews</strong>fuel, bags, clean, push</div>

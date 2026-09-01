@@ -301,8 +301,10 @@ canvas.game-canvas {
 .title-card h1,
 .results-card h1 {
   margin: 0;
-  font-size: 64px;
-  letter-spacing: 0.12em;
+  font-size: clamp(28px, 6vw, 48px);
+  letter-spacing: 0.08em;
+  font-family: "Press Start 2P", Rajdhani, sans-serif;
+  line-height: 1.25;
 }
 
 .title-card p,
