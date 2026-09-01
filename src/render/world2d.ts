@@ -1,5 +1,5 @@
 import { AIRCRAFT, AIRLINES, VEHICLES } from "../data/catalog";
-import { GATES, serviceWorldPoint } from "../data/waypoints";
+import { GATES, jetBridgeLayout, serviceWorldPoint } from "../data/waypoints";
 import type { Simulation } from "../sim/simulation";
 import type { MapCamera } from "./camera2d";
 import { BAG_COLORS, aircraftSprite, bagSprite, loadSpriteFiles, vehicleSprite } from "./sprites";
@@ -20,6 +20,7 @@ function blit(
   scale: number,
   heading: number,
   maxScale = 4,
+  shadow = false,
 ): void {
   ctx.save();
   ctx.translate(Math.round(x), Math.round(y));
@@ -28,10 +29,13 @@ function blit(
   const s = Math.max(1, Math.min(maxScale, Math.round(scale)));
   const w = sprite.width * s;
   const h = sprite.height * s;
-  // Soft ground shadow so large pixels read a bit less harsh
-  ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
-  ctx.fillRect(Math.round(-w / 2) + 2, Math.round(-h / 2) + 2, w, h);
-  ctx.drawImage(sprite, Math.round(-w / 2), Math.round(-h / 2), w, h);
+  const left = Math.round(-w / 2);
+  const top = Math.round(-h / 2);
+  if (shadow) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
+    ctx.fillRect(left + 2, top + 2, w, h);
+  }
+  ctx.drawImage(sprite, left, top, w, h);
   ctx.restore();
 }
 
@@ -153,15 +157,10 @@ export class PixelWorld {
       );
       const l1Offset = (flight ? AIRCRAFT[flight.aircraftTypeId] : AIRCRAFT.nb320).serviceOffsets.l1;
       const l1 = serviceWorldPoint(gate.stand, gate.heading, l1Offset);
+      const { pier, tip } = jetBridgeLayout(gate, l1, extend);
 
-      // Pier sits on the port side of the stand so the bridge never looks nose-centered.
-      const pierX = gate.stand.x - 4.8;
-      const pierZ = -12;
-      const tipX = pierX + (l1.x - pierX) * extend;
-      const tipZ = -6 + (l1.z + 6) * extend;
-
-      const b0 = camera.worldToScreen(pierX, pierZ);
-      const b1 = camera.worldToScreen(tipX, tipZ);
+      const b0 = camera.worldToScreen(pier.x, pier.z);
+      const b1 = camera.worldToScreen(tip.x, tip.z);
       ctx.strokeStyle = CONCRETE;
       ctx.lineWidth = Math.max(4, camera.zoom * 1.15);
       ctx.lineCap = "round";
@@ -175,15 +174,16 @@ export class PixelWorld {
       ctx.moveTo(Math.round(b0.x), Math.round(b0.y));
       ctx.lineTo(Math.round(b1.x), Math.round(b1.y));
       ctx.stroke();
-      // Cabin head at the aircraft end
-      fillRect(
-        ctx,
-        b1.x - camera.zoom * 1.1,
-        b1.y - camera.zoom * 0.9,
-        camera.zoom * 2.2,
-        camera.zoom * 1.8,
-        "#9aa8b8",
-      );
+      if (extend > 0.85) {
+        fillRect(
+          ctx,
+          b1.x - camera.zoom * 0.85,
+          b1.y - camera.zoom * 0.7,
+          camera.zoom * 1.7,
+          camera.zoom * 1.4,
+          "#9aa8b8",
+        );
+      }
     }
 
     this.pad(ctx, camera, -24, 24, "#f1c40f");
@@ -273,7 +273,7 @@ export class PixelWorld {
       }
       const screen = camera.worldToScreen(vehicle.position.x, vehicle.position.z);
       const scale = (3.4 * camera.zoom) / sprite.height;
-      blit(ctx, sprite, screen.x, screen.y, scale, vehicle.heading, 3);
+      blit(ctx, sprite, screen.x, screen.y, scale, vehicle.heading, 3, true);
     }
   }
 
@@ -318,11 +318,8 @@ export class PixelWorld {
     );
     const l1Offset = (flight ? AIRCRAFT[flight.aircraftTypeId] : AIRCRAFT.nb320).serviceOffsets.l1;
     const l1 = serviceWorldPoint(gate.stand, gate.heading, l1Offset);
-    const pierX = gate.stand.x - 4.8;
-    const pierZ = -12;
-    const tipX = pierX + (l1.x - pierX) * extend;
-    const tipZ = -6 + (l1.z + 6) * extend;
-    return { startX: pierX, startZ: pierZ, endX: tipX, endZ: tipZ, extend };
+    const { pier, tip } = jetBridgeLayout(gate, l1, extend);
+    return { startX: pier.x, startZ: pier.z, endX: tip.x, endZ: tip.z, extend };
   }
 
   private trackPassengers(sim: Simulation, dt: number): void {

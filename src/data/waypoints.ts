@@ -83,6 +83,19 @@ export function serviceWorldPoint(
   return { x: stand.x + rotated.x, z: stand.z + rotated.z };
 }
 
+/** Terminal pier on the port side of the stand; tip lerps to the L1 door. */
+export function jetBridgeLayout(gate: GateDef, l1: Vec2, extend: number): { pier: Vec2; tip: Vec2 } {
+  const pier = { x: gate.stand.x - 3, z: -12 };
+  const t = Math.min(1, Math.max(0, extend));
+  return {
+    pier,
+    tip: {
+      x: pier.x + (l1.x - pier.x) * t,
+      z: pier.z + (l1.z - pier.z) * t,
+    },
+  };
+}
+
 export function waypointMap(): Map<string, Waypoint> {
   return new Map(WAYPOINTS.map((wp) => [wp.id, wp]));
 }
