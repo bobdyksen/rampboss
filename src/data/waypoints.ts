@@ -67,9 +67,10 @@ export const STAGING: Record<VehicleType, string> = {
 export function rotateOffset(offset: Vec2, heading: number): Vec2 {
   const s = Math.sin(heading);
   const c = Math.cos(heading);
+  // offset.x is negative toward port; offset.z is positive toward the nose.
   return {
-    x: offset.x * c + offset.z * s,
-    z: -offset.x * s + offset.z * c,
+    x: -offset.x * c + offset.z * s,
+    z: offset.x * s + offset.z * c,
   };
 }
 

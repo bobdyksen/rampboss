@@ -1,5 +1,5 @@
 import { AIRCRAFT, AIRLINES, VEHICLES } from "../data/catalog";
-import { GATES } from "../data/waypoints";
+import { GATES, serviceWorldPoint } from "../data/waypoints";
 import type { Simulation } from "../sim/simulation";
 import type { MapCamera } from "./camera2d";
 import { BAG_COLORS, aircraftSprite, bagSprite, loadSpriteFiles, vehicleSprite } from "./sprites";
@@ -132,8 +132,22 @@ export class PixelWorld {
 
       const gateState = sim.gates.find((g) => g.id === gate.id);
       const extend = gateState?.jetBridge ?? 0;
-      const b0 = camera.worldToScreen(gate.stand.x + 4.2, -12);
-      const b1 = camera.worldToScreen(gate.stand.x + 4.2, -12 + 6 + extend * 12);
+      const flight = sim.flights.find(
+        (f) =>
+          f.id === gateState?.occupiedBy &&
+          f.phase !== "scheduled" &&
+          f.phase !== "departed",
+      );
+      const l1Offset = (flight ? AIRCRAFT[flight.aircraftTypeId] : AIRCRAFT.nb320).serviceOffsets.l1;
+      const l1 = serviceWorldPoint(gate.stand, gate.heading, l1Offset);
+
+      const terminalZ = -12;
+      const retractedEndZ = terminalZ + 6;
+      const bridgeEndZ = retractedEndZ + (l1.z - retractedEndZ) * extend;
+      const bridgeX = gate.stand.x + (l1.x - gate.stand.x) * extend;
+
+      const b0 = camera.worldToScreen(bridgeX, terminalZ);
+      const b1 = camera.worldToScreen(bridgeX, bridgeEndZ);
       fillRect(ctx, b0.x - camera.zoom * 0.7, b0.y, camera.zoom * 1.4, b1.y - b0.y, CONCRETE);
       fillRect(ctx, b1.x - camera.zoom * 0.95, b1.y - camera.zoom * 0.8, camera.zoom * 1.9, camera.zoom * 1.6, "#9aa8b8");
     }
