@@ -1,5 +1,5 @@
 import { AIRCRAFT, AIRLINES, VEHICLES } from "../data/catalog";
-import { GATES, jetBridgeLayout, serviceWorldPoint } from "../data/waypoints";
+import { GATES, aircraftDoorPoint, jetBridgeLayout } from "../data/waypoints";
 import type { Simulation } from "../sim/simulation";
 import type { MapCamera } from "./camera2d";
 import { BAG_COLORS, aircraftSprite, bagSprite, loadSpriteFiles, vehicleSprite } from "./sprites";
@@ -156,8 +156,10 @@ export class PixelWorld {
           f.phase !== "departed",
       );
       const l1Offset = (flight ? AIRCRAFT[flight.aircraftTypeId] : AIRCRAFT.nb320).serviceOffsets.l1;
-      const l1 = serviceWorldPoint(gate.stand, gate.heading, l1Offset);
-      const { pier, tip } = jetBridgeLayout(gate, l1, extend);
+      const anchor = flight?.position ?? gate.stand;
+      const heading = flight?.heading ?? gate.heading;
+      const l1 = aircraftDoorPoint(anchor, heading, l1Offset);
+      const { pier, tip } = jetBridgeLayout(l1, extend);
 
       const b0 = camera.worldToScreen(pier.x, pier.z);
       const b1 = camera.worldToScreen(tip.x, tip.z);
@@ -175,14 +177,8 @@ export class PixelWorld {
       ctx.lineTo(Math.round(b1.x), Math.round(b1.y));
       ctx.stroke();
       if (extend > 0.85) {
-        fillRect(
-          ctx,
-          b1.x - camera.zoom * 0.85,
-          b1.y - camera.zoom * 0.7,
-          camera.zoom * 1.7,
-          camera.zoom * 1.4,
-          "#9aa8b8",
-        );
+        const head = camera.zoom * 1.2;
+        fillRect(ctx, b1.x - head / 2, b1.y - head / 2, head, head, "#9aa8b8");
       }
     }
 
@@ -317,8 +313,10 @@ export class PixelWorld {
       (f) => f.id === gateState?.occupiedBy && f.phase !== "scheduled" && f.phase !== "departed",
     );
     const l1Offset = (flight ? AIRCRAFT[flight.aircraftTypeId] : AIRCRAFT.nb320).serviceOffsets.l1;
-    const l1 = serviceWorldPoint(gate.stand, gate.heading, l1Offset);
-    const { pier, tip } = jetBridgeLayout(gate, l1, extend);
+    const anchor = flight?.position ?? gate.stand;
+    const heading = flight?.heading ?? gate.heading;
+    const l1 = aircraftDoorPoint(anchor, heading, l1Offset);
+    const { pier, tip } = jetBridgeLayout(l1, extend);
     return { startX: pier.x, startZ: pier.z, endX: tip.x, endZ: tip.z, extend };
   }
 

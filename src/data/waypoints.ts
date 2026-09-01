@@ -64,6 +64,8 @@ export const STAGING: Record<VehicleType, string> = {
   pushback_tug: "tug_staging",
 };
 
+export const AIRCRAFT_VISUAL_SCALE = 0.78;
+
 export function rotateOffset(offset: Vec2, heading: number): Vec2 {
   const s = Math.sin(heading);
   const c = Math.cos(heading);
@@ -83,14 +85,27 @@ export function serviceWorldPoint(
   return { x: stand.x + rotated.x, z: stand.z + rotated.z };
 }
 
-/** Terminal pier on the port side of the stand; tip lerps to the L1 door. */
-export function jetBridgeLayout(gate: GateDef, l1: Vec2, extend: number): { pier: Vec2; tip: Vec2 } {
-  const pier = { x: gate.stand.x - 3, z: -12 };
+/** Door / service point aligned to the on-screen sprite scale. */
+export function aircraftDoorPoint(
+  position: Vec2,
+  heading: number,
+  bodyOffset: Vec2,
+  visualScale = AIRCRAFT_VISUAL_SCALE,
+): Vec2 {
+  return serviceWorldPoint(position, heading, {
+    x: bodyOffset.x * visualScale,
+    z: bodyOffset.z * visualScale,
+  });
+}
+
+/** Vertical bridge from the terminal down to the L1 door. */
+export function jetBridgeLayout(l1: Vec2, extend: number): { pier: Vec2; tip: Vec2 } {
+  const pier = { x: l1.x, z: -14 };
   const t = Math.min(1, Math.max(0, extend));
   return {
     pier,
     tip: {
-      x: pier.x + (l1.x - pier.x) * t,
+      x: l1.x,
       z: pier.z + (l1.z - pier.z) * t,
     },
   };
