@@ -24,9 +24,10 @@ function blit(
   ctx.translate(Math.round(x), Math.round(y));
   ctx.rotate(Math.PI - heading);
   ctx.imageSmoothingEnabled = false;
-  const w = sprite.width * scale;
-  const h = sprite.height * scale;
-  ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
+  const s = Math.max(1, Math.round(scale));
+  const w = sprite.width * s;
+  const h = sprite.height * s;
+  ctx.drawImage(sprite, Math.round(-w / 2), Math.round(-h / 2), w, h);
   ctx.restore();
 }
 

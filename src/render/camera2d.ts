@@ -3,7 +3,7 @@
 export class MapCamera {
   x = 0;
   z = 14;
-  zoom = 16;
+  zoom = 13;
   width = 800;
   height = 600;
   private focusX = 0;
