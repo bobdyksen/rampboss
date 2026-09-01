@@ -14,7 +14,7 @@ export const AIRCRAFT: Record<string, AircraftType> = {
     colorSecondary: "#f4f7fb",
     engineCount: 2,
     serviceOffsets: {
-      l1: { x: -3.2, z: 6.2 },
+      l1: { x: -4.6, z: 6.8 },
       cargo: { x: -4.4, z: -1.4 },
       fuel: { x: 5.2, z: 1.2 },
       service: { x: -3.6, z: -5.2 },
@@ -34,7 +34,7 @@ export const AIRCRAFT: Record<string, AircraftType> = {
     colorSecondary: "#f7fbff",
     engineCount: 2,
     serviceOffsets: {
-      l1: { x: -4.0, z: 9.0 },
+      l1: { x: -5.6, z: 9.6 },
       cargo: { x: -5.2, z: -2.0 },
       fuel: { x: 6.4, z: 1.6 },
       service: { x: -4.2, z: -8.0 },
@@ -92,7 +92,7 @@ export const SERVICES: Record<string, ServiceDef> = {
     id: "deplane",
     label: "Deplane",
     shortLabel: "DEPLANE",
-    playerAssigned: false,
+    playerAssigned: true,
     vehicleTypes: [],
     dependsOn: ["jet_bridge"],
     durationSim: (ac, airline) =>
@@ -142,7 +142,7 @@ export const SERVICES: Record<string, ServiceDef> = {
     id: "boarding",
     label: "Boarding",
     shortLabel: "BOARD",
-    playerAssigned: false,
+    playerAssigned: true,
     vehicleTypes: [],
     dependsOn: ["cleaning", "jet_bridge"],
     durationSim: (ac, airline) =>

@@ -3,7 +3,7 @@
 export class MapCamera {
   x = 0;
   z = 14;
-  zoom = 13;
+  zoom = 10;
   width = 800;
   height = 600;
   private focusX = 0;
@@ -25,7 +25,7 @@ export class MapCamera {
 
   zoomAt(screenX: number, screenY: number, factor: number): void {
     const before = this.screenToWorld(screenX, screenY);
-    this.zoom = Math.min(36, Math.max(8, this.zoom * factor));
+    this.zoom = Math.min(28, Math.max(6, this.zoom * factor));
     const after = this.screenToWorld(screenX, screenY);
     this.x += before.x - after.x;
     this.z += before.z - after.z;

@@ -19,14 +19,18 @@ function blit(
   y: number,
   scale: number,
   heading: number,
+  maxScale = 4,
 ): void {
   ctx.save();
   ctx.translate(Math.round(x), Math.round(y));
   ctx.rotate(Math.PI - heading);
   ctx.imageSmoothingEnabled = false;
-  const s = Math.max(1, Math.round(scale));
+  const s = Math.max(1, Math.min(maxScale, Math.round(scale)));
   const w = sprite.width * s;
   const h = sprite.height * s;
+  // Soft ground shadow so large pixels read a bit less harsh
+  ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
+  ctx.fillRect(Math.round(-w / 2) + 2, Math.round(-h / 2) + 2, w, h);
   ctx.drawImage(sprite, Math.round(-w / 2), Math.round(-h / 2), w, h);
   ctx.restore();
 }
@@ -42,6 +46,13 @@ export class PixelWorld {
   private bags: Array<{ flightId: string; t: number; side: number; color: string }> = [];
   private bagArt = new Map<string, HTMLCanvasElement>();
   private files = new Map<string, HTMLCanvasElement>();
+  private passengers: Array<{
+    flightId: string;
+    t: number;
+    dir: 1 | -1;
+    lane: number;
+    color: string;
+  }> = [];
   private clock = 0;
 
   constructor() {
@@ -77,6 +88,7 @@ export class PixelWorld {
   draw(ctx: CanvasRenderingContext2D, camera: MapCamera, sim: Simulation, dt: number): void {
     this.clock += dt;
     this.trackBags(sim, dt);
+    this.trackPassengers(sim, dt);
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = GRASS;
     ctx.fillRect(0, 0, camera.width, camera.height);
@@ -85,6 +97,7 @@ export class PixelWorld {
     this.drawVehicles(ctx, camera, sim);
     this.drawBags(ctx, camera, sim);
     this.drawAircraft(ctx, camera, sim);
+    this.drawPassengers(ctx, camera, sim);
   }
 
   private drawChecker(ctx: CanvasRenderingContext2D, camera: MapCamera): void {
@@ -141,15 +154,36 @@ export class PixelWorld {
       const l1Offset = (flight ? AIRCRAFT[flight.aircraftTypeId] : AIRCRAFT.nb320).serviceOffsets.l1;
       const l1 = serviceWorldPoint(gate.stand, gate.heading, l1Offset);
 
-      const terminalZ = -12;
-      const retractedEndZ = terminalZ + 6;
-      const bridgeEndZ = retractedEndZ + (l1.z - retractedEndZ) * extend;
-      const bridgeX = gate.stand.x + (l1.x - gate.stand.x) * extend;
+      // Pier sits on the port side of the stand so the bridge never looks nose-centered.
+      const pierX = gate.stand.x - 4.8;
+      const pierZ = -12;
+      const tipX = pierX + (l1.x - pierX) * extend;
+      const tipZ = -6 + (l1.z + 6) * extend;
 
-      const b0 = camera.worldToScreen(bridgeX, terminalZ);
-      const b1 = camera.worldToScreen(bridgeX, bridgeEndZ);
-      fillRect(ctx, b0.x - camera.zoom * 0.7, b0.y, camera.zoom * 1.4, b1.y - b0.y, CONCRETE);
-      fillRect(ctx, b1.x - camera.zoom * 0.95, b1.y - camera.zoom * 0.8, camera.zoom * 1.9, camera.zoom * 1.6, "#9aa8b8");
+      const b0 = camera.worldToScreen(pierX, pierZ);
+      const b1 = camera.worldToScreen(tipX, tipZ);
+      ctx.strokeStyle = CONCRETE;
+      ctx.lineWidth = Math.max(4, camera.zoom * 1.15);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(Math.round(b0.x), Math.round(b0.y));
+      ctx.lineTo(Math.round(b1.x), Math.round(b1.y));
+      ctx.stroke();
+      ctx.strokeStyle = "#a8b4c4";
+      ctx.lineWidth = Math.max(2, camera.zoom * 0.7);
+      ctx.beginPath();
+      ctx.moveTo(Math.round(b0.x), Math.round(b0.y));
+      ctx.lineTo(Math.round(b1.x), Math.round(b1.y));
+      ctx.stroke();
+      // Cabin head at the aircraft end
+      fillRect(
+        ctx,
+        b1.x - camera.zoom * 1.1,
+        b1.y - camera.zoom * 0.9,
+        camera.zoom * 2.2,
+        camera.zoom * 1.8,
+        "#9aa8b8",
+      );
     }
 
     this.pad(ctx, camera, -24, 24, "#f1c40f");
@@ -208,8 +242,8 @@ export class PixelWorld {
         this.aircraft.set(key, sprite);
       }
       const screen = camera.worldToScreen(flight.position.x, flight.position.z);
-      const scale = (type.length * camera.zoom) / sprite.height;
-      blit(ctx, sprite, screen.x, screen.y, scale, flight.heading);
+      const scale = (type.length * 0.78 * camera.zoom) / sprite.height;
+      blit(ctx, sprite, screen.x, screen.y, scale, flight.heading, 3);
       this.lastFlightPos.set(flight.id, { x: flight.position.x, y: 0, z: flight.position.z });
 
       if (flight.id === sim.selectedFlightId) {
@@ -239,7 +273,7 @@ export class PixelWorld {
       }
       const screen = camera.worldToScreen(vehicle.position.x, vehicle.position.z);
       const scale = (3.4 * camera.zoom) / sprite.height;
-      blit(ctx, sprite, screen.x, screen.y, scale, vehicle.heading);
+      blit(ctx, sprite, screen.x, screen.y, scale, vehicle.heading, 3);
     }
   }
 
@@ -264,6 +298,77 @@ export class PixelWorld {
       bag.t += bag.side * dt * 0.4;
       return bag.t > -0.1 && bag.t < 1.15;
     });
+  }
+
+
+  private bridgeGeometry(sim: Simulation, gateId: string): {
+    startX: number;
+    startZ: number;
+    endX: number;
+    endZ: number;
+    extend: number;
+  } | null {
+    const gate = GATES.find((g) => g.id === gateId);
+    if (!gate) return null;
+    const gateState = sim.gates.find((g) => g.id === gate.id);
+    const extend = gateState?.jetBridge ?? 0;
+    if (extend < 0.15) return null;
+    const flight = sim.flights.find(
+      (f) => f.id === gateState?.occupiedBy && f.phase !== "scheduled" && f.phase !== "departed",
+    );
+    const l1Offset = (flight ? AIRCRAFT[flight.aircraftTypeId] : AIRCRAFT.nb320).serviceOffsets.l1;
+    const l1 = serviceWorldPoint(gate.stand, gate.heading, l1Offset);
+    const pierX = gate.stand.x - 4.8;
+    const pierZ = -12;
+    const tipX = pierX + (l1.x - pierX) * extend;
+    const tipZ = -6 + (l1.z + 6) * extend;
+    return { startX: pierX, startZ: pierZ, endX: tipX, endZ: tipZ, extend };
+  }
+
+  private trackPassengers(sim: Simulation, dt: number): void {
+    const colors = ["#f5d76e", "#7fdbda", "#ff8b94", "#c5e0dc", "#f7cac9", "#b5ead7"];
+    for (const flight of sim.flights) {
+      const deplane = flight.tasks.find((t) => t.id === "deplane");
+      const boarding = flight.tasks.find((t) => t.id === "boarding");
+      const deplaning = deplane?.state === "in_progress" || deplane?.state === "assigned";
+      const boardingNow = boarding?.state === "in_progress" || boarding?.state === "assigned";
+      if (!deplaning && !boardingNow) continue;
+      // Real-time spawn rate — plenty of little dots walking the bridge
+      const rate = (deplaning ? 5.5 : 4.5) * dt;
+      if (Math.random() < rate) {
+        this.passengers.push({
+          flightId: flight.id,
+          t: deplaning ? 0 : 1,
+          dir: deplaning ? 1 : -1,
+          lane: (Math.random() - 0.5) * 0.7,
+          color: colors[Math.floor(Math.random() * colors.length)],
+        });
+      }
+    }
+    this.passengers = this.passengers.filter((pax) => {
+      const flight = sim.flights.find((f) => f.id === pax.flightId);
+      if (!flight || flight.phase === "departed" || flight.phase === "pushing") return false;
+      pax.t += pax.dir * dt * 0.22;
+      return pax.t >= -0.05 && pax.t <= 1.05;
+    });
+  }
+
+  private drawPassengers(ctx: CanvasRenderingContext2D, camera: MapCamera, sim: Simulation): void {
+    for (const pax of this.passengers) {
+      const flight = sim.flights.find((f) => f.id === pax.flightId);
+      if (!flight) continue;
+      const bridge = this.bridgeGeometry(sim, flight.gateId);
+      if (!bridge) continue;
+      const wx = bridge.startX + (bridge.endX - bridge.startX) * (1 - pax.t) + pax.lane;
+      // t=0 at aircraft (end), t=1 at terminal (start)
+      const wz = bridge.endZ + (bridge.startZ - bridge.endZ) * pax.t;
+      const screen = camera.worldToScreen(wx, wz);
+      const size = Math.max(3, Math.round(camera.zoom * 0.42));
+      ctx.fillStyle = "#0d1118";
+      ctx.fillRect(Math.round(screen.x) - 1, Math.round(screen.y) - 1, size + 2, size + 2);
+      ctx.fillStyle = pax.color;
+      ctx.fillRect(Math.round(screen.x), Math.round(screen.y), size, size);
+    }
   }
 
   private drawBags(ctx: CanvasRenderingContext2D, camera: MapCamera, sim: Simulation): void {
